@@ -95,6 +95,8 @@ void MRCtx_Free(MRCtx *ctx) {
     MRCommand_Free(&ctx->cmds[i]);
   }
 
+  free(ctx->cmds);
+
   for (int i = 0; i < ctx->numReplied; i++) {
     if (ctx->replies[i] != NULL) {
       MRReply_Free(ctx->replies[i]);
