@@ -322,8 +322,8 @@ typedef struct {
 } searchRequestCtx;
 
 void searchRequestCtx_Free(searchRequestCtx *r) {
-  free(r->queryString);
-  free(r);
+  rm_free(r->queryString);
+  rm_free(r);
 }
 
 searchRequestCtx *rscParseRequest(RedisModuleString **argv, int argc) {
@@ -332,8 +332,8 @@ searchRequestCtx *rscParseRequest(RedisModuleString **argv, int argc) {
     return NULL;
   }
 
-  searchRequestCtx *req = malloc(sizeof(searchRequestCtx));
-  req->queryString = strdup(RedisModule_StringPtrLen(argv[2], NULL));
+  searchRequestCtx *req = rm_malloc(sizeof(searchRequestCtx));
+  req->queryString = rm_strdup(RedisModule_StringPtrLen(argv[2], NULL));
   req->limit = 10;
   req->offset = 0;
   // marks the user set WITHSCORES. internally it's always set
@@ -372,7 +372,7 @@ searchRequestCtx *rscParseRequest(RedisModuleString **argv, int argc) {
   // Parse LIMIT argument
   RMUtil_ParseArgsAfter("LIMIT", argv, argc, "ll", &req->offset, &req->limit);
   if (req->limit < 0 || req->offset < 0) {
-    free(req);
+    rm_free(req);
     return NULL;
   }
 
@@ -450,7 +450,7 @@ static int cmp_results(const void *p1, const void *p2, const void *udata) {
 
 searchResult *newResult(searchResult *cached, MRReply *arr, int j, int scoreOffset,
                         int payloadOffset, int fieldsOffset, int sortKeyOffset, int explainScores) {
-  searchResult *res = cached ? cached : malloc(sizeof(searchResult));
+  searchResult *res = cached ? cached : rm_malloc(sizeof(searchResult));
   res->sortKey = NULL;
   res->sortKeyNum = HUGE_VAL;
   if (MRReply_Type(MRReply_ArrayElement(arr, j)) != MR_REPLY_STRING) {
@@ -683,7 +683,7 @@ static void sendSearchResults(RedisModuleCtx *ctx, searchReducerCtx *rCtx) {
 
   // Free the sorted results
   for (pos = 0; pos < qlen; pos++) {
-    free(results[pos]);
+    rm_free(results[pos]);
   }
 }
 
@@ -707,7 +707,7 @@ int searchResultReducer(struct MRCtx *mc, int count, MRReply **replies) {
     processSearchReply(replies[i], &rCtx, ctx);
   }
   if (rCtx.cachedResult) {
-    free(rCtx.cachedResult);
+    rm_free(rCtx.cachedResult);
   }
   // If we didn't get any results and we got an error - return it.
   // If some shards returned results and some errors - we prefer to show the results we got an not
@@ -725,7 +725,7 @@ int searchResultReducer(struct MRCtx *mc, int count, MRReply **replies) {
   if (rCtx.pq) {
     searchResult *res;
     while ((res = heap_poll(rCtx.pq))) {
-      free(res);
+      rm_free(res);
     }
     heap_free(rCtx.pq);
   }
@@ -1368,13 +1368,13 @@ static RedisModuleCmdFunc SafeCmd(RedisModuleCmdFunc f) {
  * cursor name, and use the real name as the entry.
  */
 static void addIndexCursor(const IndexSpec *sp) {
-  char *s = strdup(sp->name);
+  char *s = rm_strdup(sp->name);
   char *end = strchr(s, '{');
   if (end) {
     *end = '\0';
     CursorList_AddSpec(&RSCursors, s, RSCURSORS_DEFAULT_CAPACITY);
   }
-  free(s);
+  rm_free(s);
 }
 
 #define RM_TRY(expr)                                                  \

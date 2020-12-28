@@ -211,12 +211,12 @@ static void rpnetFree(ResultProcessor *rp) {
   }
 
   if (nc->it) MRIterator_Free(nc->it);
-  free(rp);
+  rm_free(rp);
 }
 
 static RPNet *RPNet_New(const MRCommand *cmd, SearchCluster *sc) {
   //  MRCommand_FPrint(stderr, &cmd);
-  RPNet *nc = calloc(1, sizeof(*nc));
+  RPNet *nc = rm_calloc(1, sizeof(*nc));
   nc->cmd = *cmd;
   nc->cg = SearchCluster_MultiplexCommand(sc, &nc->cmd);
   nc->base.Free = rpnetFree;
